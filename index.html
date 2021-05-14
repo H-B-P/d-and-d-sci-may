@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>D&D.Sci May 2021 Evaluator</title>
+</head>
+<body>
+  <div>Lot #1 (Yeti, 0 days)</div>
+  <div>Bid: <input type="number" id="lot1"></input>sp</div>
+  <br>
+  <div>Lot #2 (Snow Serpent, 2 days)</div>
+  <div>Bid: <input type="number" id="lot2"></input>sp</div>
+  <br>
+  <div>Lot #3 (Snow Serpent, 1 day)</div>
+  <div>Bid: <input type="number" id="lot3"></input>sp</div>
+  <br>
+  <div>Lot #4 (Winter Wolf, 1 day)</div>
+  <div>Bid: <input type="number" id="lot4"></input>sp</div>
+  <br>
+  <div>Lot #5 (Yeti, 5 days)</div>
+  <div>Bid: <input type="number" id="lot5"></input>sp</div>
+  <br>
+  <div>Lot #6 (Winter Wolf, 1 day)</div>
+  <div>Bid: <input type="number" id="lot6"></input>sp</div>
+  <br>
+  <div>Lot #7 (Snow Serpent, 1 day)</div>
+  <div>Bid: <input type="number" id="lot7"></input>sp</div>
+  <br>
+  <div>Lot #8 (Snow Serpent, 5 days)</div>
+  <div>Bid: <input type="number" id="lot8"></input>sp</div>
+  <br>
+  <div>Lot #9 (Winter Wolf, 3 days)</div>
+  <div>Bid: <input type="number" id="lot9"></input>sp</div>
+  <br>
+  <div>Lot #10 (Winter Wolf, 7 days)</div>
+  <div>Bid: <input type="number" id="lot10"></input>sp</div>
+  <br>
+  <div>Lot #11 (Winter Wolf, 8 days)</div>
+  <div>Bid: <input type="number" id="lot11"></input>sp</div>
+  <br>
+  <div>Lot #12 (Snow Serpent, 8 days)</div>
+  <div>Bid: <input type="number" id="lot12"></input>sp</div>
+  <br>
+  <div>Lot #13 (Winter Wolf, 2 days)</div>
+  <div>Bid: <input type="number" id="lot13"></input>sp</div>
+  <br>
+  <br>
+
+  <br>
+  <div id="confirm"><button onclick="confirm()">Confirm bids</button></div>
+  <br>
+  <br>
+  <div id="AV"></div>
+  <br>
+  <div id="epilogue"></div>
+  <br>
+  <div id="EV"></div>
+<b style="font-size:28px">
+</div>
+  
+</b>
+<script id="jsbin-javascript">
+
+//Probablistic!
+
+function roll_dX(X){
+ return Math.ceil(Math.random()*X)
+}
+
+function roll_NdX(N, X){
+ op=0
+ for (i = 0; i < N; i++)
+  op+=roll_dX(X)
+ return op
+}
+
+function gen_creature(species, days){
+ if (species=="Yeti"){return 72+roll_dX(6)-roll_NdX(days,6)}
+ if (species=="Snow Serpent"){return 20+roll_NdX(2,6)}
+ if (species=="Winter Wolf"){return 25-2*days+roll_NdX(4,6)}
+}
+
+function alistair_bid(species, days){
+ if (species=="Yeti"){return Math.max(0, 55-days*6)}
+ if (species=="Snow Serpent"){return Math.max(0, 60-days*20)}
+ if (species=="Winter Wolf"){return Math.max(0, 50-days*12)}
+}
+
+function betty_bid(species, days){
+ if (species=="Yeti"){return 29+roll_dX(6)}
+ if (species=="Snow Serpent"){return 9+roll_dX(8)}
+ if (species=="Winter Wolf"){return 19+roll_dX(4)}
+}
+
+//Deterministic!
+
+function get_ev_of_lot(species, days){
+ if (species=="Yeti"){return 72+3.5-3.5*days}
+ if (species=="Snow Serpent"){return 20+3.5*2}
+ if (species=="Winter Wolf"){return 25-2*days+4*3.5}
+}
+
+function alistair_bid_det(species, days){
+ if (species=="Yeti"){return Math.max(0, 55-days*6)}
+ if (species=="Snow Serpent"){return Math.max(0, 60-days*20)}
+ if (species=="Winter Wolf"){return Math.max(0, 50-days*12)}
+}
+
+function betty_bids(species, days){
+ if (species=="Yeti"){return [30,31,32,33,34,35]}
+ if (species=="Snow Serpent"){return [10,11,12,13,14,15,16,17]}
+ if (species=="Winter Wolf"){return [20,21,22,23]}
+}
+
+function get_profit_of_given_bid(bid, species, days){
+ return get_ev_of_lot(species,days) - bid
+}
+
+function get_prob_of_given_bid(bid, species, days){
+ aBid = alistair_bid_det(species, days)
+ bBids = betty_bids(species,days)
+ wins=0
+ for (bBid in bBids){
+  if (bid > Math.max(bBids[bBid], aBid)){
+   wins+=1
+  }
+ }
+ return wins/bBids.length
+}
+
+function get_ev_of_given_bid(bid, species, days){
+ return get_profit_of_given_bid(bid, species, days)*get_prob_of_given_bid(bid,species,days)
+}
+
+
+//By your powers combined . . .
+
+function handle_lot(species, days, lotloc){
+ bid = (document.getElementById(lotloc).value)*1.0
+ 
+ spendlim+=bid
+ 
+ EV+=get_ev_of_given_bid(bid, species, days)
+ 
+ aBid=alistair_bid(species, days)
+ bBid=betty_bid(species, days)
+ if (bid<silver){
+  if (bid>Math.max(aBid, bBid)){
+   ActualV-=bid
+   silver-=bid
+   ActualV+=gen_creature(species, days)
+  }
+ }
+}
+
+//Epilogues
+
+function select_epilogue(ActualV){
+ if (ActualV>=70){
+  return "Carver is extremely impressed, and decides to delegate all future shopping trips to you."
+ }
+ if (ActualV>=55){
+  return "Carver says you did very well for your first time."
+ }
+ if (ActualV>0){
+  return "Carver says you did decently for your first time."
+ }
+ if (ActualV<=0){
+  return "Carver bans you from handling money for the remaining duration of your apprenticeship."
+ }
+ return ""
+}
+
+function two_dp(num){
+ return Math.floor(100*num)/100
+}
+//Here we go
+
+function confirm(){
+ silver=400
+ spendlim=0
+ EV = 0
+ ActualV = 0
+ 
+ handle_lot("Yeti", 0, "lot1")
+ handle_lot("Snow Serpent", 2, "lot2")
+ handle_lot("Snow Serpent", 1, "lot3")
+ handle_lot("Winter Wolf", 1, "lot4")
+ handle_lot("Yeti", 5, "lot5")
+ handle_lot("Winter Wolf", 1, "lot6")
+ handle_lot("Snow Serpent", 1, "lot7")
+ handle_lot("Snow Serpent", 5, "lot8")
+ handle_lot("Winter Wolf", 3, "lot9")
+ handle_lot("Winter Wolf", 7, "lot10")
+ handle_lot("Winter Wolf", 8, "lot11")
+ handle_lot("Snow Serpent", 8, "lot12")
+ handle_lot("Winter Wolf", 2, "lot13")
+ 
+ document.getElementById("AV").innerHTML = "You net a profit of "+ActualV+"sp"
+ 
+ document.getElementById("epilogue").innerHTML = select_epilogue(ActualV)
+ 
+ document.getElementById("EV").innerHTML = "(The Expected Value of your strategy was "+two_dp(EV)+"sp)"
+ 
+}
+  
+
+
+</script>
+</body>
+</html>
